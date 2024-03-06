@@ -1,5 +1,10 @@
 
 <!-- add title using <svelte:head> -->
+    <script>
+        import projects from '$lib/projects.json';
+        import Project from "$lib/Project.svelte";
+    import { slide } from 'svelte/transition';
+    </script>
     <svelte:head>
         <title>Homepage</title>
     </svelte:head>
@@ -11,3 +16,16 @@
 <img src="./images/buddy.JPG" alt="Buddy, a white samoyed dog, who was my dog and also was my family." width="100px">
 <p>please enjoy an actual photo of my dog</p>
 
+<h1>Latest projects</h1>
+<div class="projects">
+    {#each projects.slice(0, 3) as p}
+        <Project info={p} hLevel=3 />
+    {/each}
+</div>
+<h1>Selected Projects</h1>
+
+<div class="projects">
+    {#each [projects[0], projects[3], projects[6]] as p}
+        <Project info={p} hLevel=3 />
+    {/each}
+</div>

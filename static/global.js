@@ -8,46 +8,35 @@ function $$ (selector, context = document) {
 }
 
 
-// Step 2
-// let navLinks = $$('nav a');
+// function getBaseUrl() {
+//     // Check if running on GitHub Pages and adjust the base URL accordingly
+//     const host = window.location.hostname;
+//     const path = window.location.pathname.split('/');
+//     console.log(window.location.pathname);
+//     // If the host contains 'github.io' and the path length is greater than 1, it's likely a project site
+//     if (host.includes('github.io') && path.length > 1) {
+//         // Construct the base URL using the first part of the path (repository name)
+//         return `/${path[1]}/`; // Adjust this index if necessary based on URL structure
+//     } else {
+//         // Use the root for local development or other hosting environments
+//         return '/';
+//     }
+// }
 
-// let currentLink = navLinks.find(a => a.host === location.host && a.pathname === location.pathname);
 
-// if (currentLink) {
-//     currentLink.classList.add("current");
+// const BASE_URL = getBaseUrl(); // Dynamically set the BASE_URL
+
+// let pages = {
+// 	"./": "Home",
+// 	"project": "Projects",
+//     "contact": "Contact",
+//     "https://katiechen1001.github.io/6.C85_labs_playtest/": "Github"
 // };
 
-// step - additional to make sure urls work when published, given that the site is hosted in a subdirectory (i.e. students who already have a github.io site)
-// Function to determine the base URL based on the current location
-function getBaseUrl() {
-    // Check if running on GitHub Pages and adjust the base URL accordingly
-    const host = window.location.hostname;
-    const path = window.location.pathname.split('/');
-    console.log(window.location.pathname);
-    // If the host contains 'github.io' and the path length is greater than 1, it's likely a project site
-    if (host.includes('github.io') && path.length > 1) {
-        // Construct the base URL using the first part of the path (repository name)
-        return `/${path[1]}/`; // Adjust this index if necessary based on URL structure
-    } else {
-        // Use the root for local development or other hosting environments
-        return '/';
-    }
-}
+// let nav = document.createElement("nav");
+// document.body.prepend(nav);
 
-
-const BASE_URL = getBaseUrl(); // Dynamically set the BASE_URL
-
-let pages = {
-	"./": "Home",
-	"project": "Projects",
-    "contact": "Contact",
-    "https://katiechen1001.github.io/6.C85_labs_playtest/": "Github"
-};
-
-let nav = document.createElement("nav");
-document.body.prepend(nav);
-
-const ARE_WE_HOME = document.documentElement.classList.contains("home");
+// const ARE_WE_HOME = document.documentElement.classList.contains("home");
 
 // step 2 
 // for (let url in pages) {

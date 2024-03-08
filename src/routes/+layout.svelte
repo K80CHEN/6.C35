@@ -8,6 +8,14 @@
         { url: "https://github.com/KatieChen1001", title: "About" },
         { url: "./contact", title: "Contact" },
     ];
+    let localStorage = globalThis.localStorage ?? {};
+    // If globalThis.localStorage is null or undefined, use an empty object {} as a fallback.
+    let colorScheme = localStorage.colorScheme
+        ? localStorage.colorScheme
+        : "light dark";
+    let root = globalThis?.document?.documentElement; // explain:
+    $: root?.style.setProperty("color-scheme", colorScheme);
+    $: localStorage.colorScheme = colorScheme;
 </script>
 
 <nav>
@@ -21,7 +29,14 @@
 </nav>
 
 <!-- { JSON.stringify($page) } -->
-
+<label class="color-scheme">
+    Theme:
+    <select bind:value={colorScheme}>
+        <option value="light dark">Automatic</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+    </select>
+</label>
 <slot />
 
 <style>

@@ -4,20 +4,25 @@
     import Pie from "$lib/Pie.svelte";
     import * as d3 from "d3";
 
-    // let filteredProjects = projects.filter((p) => p.year > 2018);
     let filteredProjects;
     let query = "";
-    $: filteredProjects = projects.filter(project => {
-        let values = Object.values(project).join("\n").toLowerCase();
-        // console.log(values);
-        return values.includes(query.toLowerCase());
-    });
-
+    let selectedYearIndex = -1;
+    let selectedYear;
     let pieData;
+    let filteredByYear;
+
+    $: filteredProjects = projects.filter((project) => {
+        // if there is a query, filter by it
+        if (query) {
+            let values = Object.values(project).join("\n").toLowerCase();
+            return values.includes(query.toLowerCase());
+        }
+
+        return true;
+    });
 
     $: {
         pieData = {};
-        console.log("filteredProjects", filteredProjects);
         let rolledData = d3.rollups(
             filteredProjects,
             (v) => v.length,
@@ -28,17 +33,15 @@
         });
     }
 
-    // let rolledData = d3.rollups(
-    //     projects,
-    //     (v) => v.length,
-    //     (d) => d.year,
-    // );
-    // pieData = rolledData.map(([year, count]) => {
-    //     return { value: count, label: year };
-    // });
+    $: selectedYear =
+        selectedYearIndex > -1 ? pieData[selectedYearIndex].label : null;
+
+    $: filteredByYear = filteredProjects.filter((project) => {
+        // return the projects that match the selected year
+        return selectedYear ? project.year === selectedYear : true; 
+    });
 </script>
 
-<!-- <pre>{ JSON.stringify(projects, null, "\t") }</pre>  -->
 <svelte:head>
     <title>Project</title>
 </svelte:head>
@@ -51,10 +54,9 @@
     placeholder="🔍 Search projects…"
 />
 
-<Pie dataProp={pieData} />
-
+<Pie dataProp={pieData} bind:selectedIndex={selectedYearIndex} />
 <div class="projects">
-    {#each filteredProjects as p}
+    {#each filteredByYear as p}
         <Project info={p} />
     {/each}
 </div>

@@ -8,13 +8,20 @@
     $: pieDataProp = sliceGeneratorProp(dataProp);
     $: slicesProp = pieDataProp.map((d) => arcGenerator(d));
     let colorsProp = d3.scaleOrdinal(d3.schemeCategory10);
+
+    export let selectedIndex = -1;
 </script>
 
 <div>
     <h3>Pie using data prop</h3>
     <svg viewBox="-50 -50 100 100">
         {#each slicesProp as slice, i}
-            <path d={slice} fill={colorsProp(i)} />
+            <path
+                d={slice}
+                fill={colorsProp(i)}
+                class:selected={selectedIndex === i}
+                on:click={(e) => (selectedIndex = selectedIndex === i ? -1 : i)}
+            />
         {/each}
     </svg>
     <ul class="legend">
@@ -58,5 +65,23 @@
     }
     li {
         display: flex;
+    }
+
+    svg:has(path:hover) {
+        path:not(:hover) {
+            opacity: 50%;
+        }
+    }
+
+    path {
+        transition: 300ms;
+        cursor: pointer;
+    }
+    .selected {
+        --color: oklch(60% 45% 0) !important;
+
+        &:is(path) {
+            fill: var(--color);
+        }
     }
 </style>

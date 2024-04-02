@@ -13,7 +13,7 @@
 </script>
 
 <div>
-    <h3>Pie using data prop</h3>
+    <h3>Pie Chart</h3>
     <svg viewBox="-50 -50 100 100">
         {#each slicesProp as slice, i}
             <path

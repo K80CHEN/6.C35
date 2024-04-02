@@ -7,6 +7,7 @@
         { url: "./project", title: "Projects" },
         { url: "https://github.com/KatieChen1001", title: "About" },
         { url: "./contact", title: "Contact" },
+        { url: "./meta", title: "Meta" },
     ];
     let localStorage = globalThis.localStorage ?? {};
     // If globalThis.localStorage is null or undefined, use an empty object {} as a fallback.

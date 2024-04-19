@@ -2,6 +2,8 @@
     import * as d3 from "d3";
     import { onMount } from "svelte";
     import Pie from "$lib/Pie.svelte";
+    import FileLines from "./FileLines.svelte";
+    import Scrolly from "svelte-scrolly";
 
     let data = [];
     let commits = [];
@@ -13,8 +15,8 @@
     let yAxisGridlines;
     let cursor = { x: 0, y: 0 };
     let svg;
-    let brushSelection;
-    let selectedCommits;
+    // let brushSelection;
+    let selectedCommits = [];
     let hasSelection;
     let selectedLines;
     let languageBreakdown;
@@ -33,6 +35,46 @@
     let xAxis, yAxis;
     let hoveredIndex = -1;
 
+    // lab 9 1.1
+    let commitProgress = 100;
+    //lab 9 5.1
+    let raceProgress = 100;
+    // map commit.datetime values to a range from 0 to 100
+    let timeScale;
+    $: timeScale = d3
+        .scaleTime()
+        .domain(d3.extent(commits.map((d) => d.datetime)))
+        .range([0, 100]);
+    $: commitMaxTime = timeScale.invert(commitProgress);
+
+    // lab 9 1.2
+    let filteredCommits;
+    // filter commits by comparing commit.datetime and commitMaxTime
+    $: filteredCommits = commits.filter((d) => d.datetime <= commitMaxTime);
+    let filteredLines;
+    // filterLines filter the data by comparing the commit datetime with the commitMaxTime
+    $: filteredLines = data.filter((d) => d.datetime <= commitMaxTime);
+
+    // lab 9 2.6
+    let colors = d3.scaleOrdinal(d3.schemeTableau10);
+
+    // optional lab 7 3.5
+    function dotInteraction(index, evt) {
+        if (evt.type === "mouseenter" || evt.type === "focus") {
+            // dot hovered
+            hoveredIndex = index;
+            cursor = { x: evt.x, y: evt.y };
+        } else if (evt.type === "mouseleave" || evt.type === "blur") {
+            // dot unhovered
+            hoveredIndex = -1;
+        } else if (
+            evt.type === "click" ||
+            (evt.key === "Enter" && evt.type === "keyup")
+        ) {
+            // overwrite selectedCommiteds with the current commit
+            selectedCommits = [commits[index]];
+        }
+    }
     onMount(async () => {
         data = await d3.csv("loc.csv", (row) => ({
             ...row,
@@ -81,7 +123,7 @@
     // moving xScale and yScale here so that data is available when they are created
     $: xScale = d3
         .scaleTime()
-        .domain(d3.extent(commits, (d) => d.datetime))
+        .domain(d3.extent(filteredCommits, (d) => d.datetime)) // lab 9 1.2
         .range([usableArea.left, usableArea.right])
         .nice();
 
@@ -109,29 +151,52 @@
         .domain(d3.extent(commits.map((d) => d.totalLines)))
         .range([5, 20]);
 
-    $: hoveredCommit = commits[hoveredIndex] ?? {};
+    $: hoveredCommit = filteredCommits[hoveredIndex] ?? {};
 
     // brushing
-    $: brushSelection = undefined;
+    // $: brushSelection = undefined;
+
     function brushed(evt) {
-        brushSelection = evt.selection;
+        // brushSelection = evt.selection;
+        let brushSelection = evt.selection;
+        selectedCommits = !brushSelection
+            ? []
+            : filteredCommits.filter((commit) => {
+                  // lab 9 1.2
+                  let min = {
+                      x: brushSelection[0][0],
+                      y: brushSelection[0][1],
+                  };
+                  let max = {
+                      x: brushSelection[1][0],
+                      y: brushSelection[1][1],
+                  };
+                  let x = xScale(commit.date);
+                  let y = yScale(commit.hourFrac);
+
+                  return x >= min.x && x <= max.x && y >= min.y && y <= max.y;
+              });
     }
+    // function isCommitSelected(commit) {
+    //     if (!brushSelection) {
+    //         return false;
+    //     } else {
+    //         let [[x0, y0], [x1, y1]] = brushSelection;
+    //         return (
+    //             x0 <= xScale(commit.datetime) &&
+    //             xScale(commit.datetime) <= x1 &&
+    //             y0 <= yScale(commit.hourFrac) &&
+    //             yScale(commit.hourFrac) <= y1
+    //         );
+    //     }
+    // }
     function isCommitSelected(commit) {
-        if (!brushSelection) {
-            return false;
-        } else {
-            let [[x0, y0], [x1, y1]] = brushSelection;
-            return (
-                x0 <= xScale(commit.datetime) &&
-                xScale(commit.datetime) <= x1 &&
-                y0 <= yScale(commit.hourFrac) &&
-                yScale(commit.hourFrac) <= y1
-            );
-        }
+        return selectedCommits.includes(commit);
     }
 
-    $: selectedCommits = brushSelection ? commits.filter(isCommitSelected) : [];
-    $: hasSelection = brushSelection && selectedCommits.length > 0;
+    // $: selectedCommits = brushSelection ? commits.filter(isCommitSelected) : [];
+    // $: hasSelection = brushSelection && selectedCommits.length > 0;
+    $: hasSelection = selectedCommits.length > 0; // update in lab 9
 
     $: selectedLines = (hasSelection ? selectedCommits : commits).flatMap(
         (d) => d.lines,
@@ -148,7 +213,6 @@
             label: language,
             value: lines,
         }));
-        console.log(pieData);
     }
 
     $: {
@@ -180,33 +244,106 @@
     <!-- Add: Time, author, lines edited -->
 </dl>
 
-<svg viewBox="0 0 {width} {height}" bind:this={svg}>
-    <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
-
-    <g
-        class="gridlines"
-        transform="translate({usableArea.left}, 0)"
-        bind:this={yAxisGridlines}
+<!-- lab 9 step 1.1  -->
+<!-- Create a new <label> element with a slider input and a <time> element that will display the date and time corresponding to the slider value.
+ -->
+<!-- <label>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        bind:value={commitProgress}
     />
-    <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
+    <time
+        >{commitMaxTime.toLocaleString("en", {
+            date: "full",
+            timeStyle: "short",
+            dateStyle: "long",
+        })}</time
+    >
+</label> -->
 
-    <g class="dots">
-        {#each commits as commit, index}
-            <circle
-                on:mouseenter={(evt) => {
-                    hoveredIndex = index;
-                    cursor = { x: evt.x, y: evt.y };
-                }}
-                on:mouseleave={() => (hoveredIndex = -1)}
-                cx={xScale(commit.datetime)}
-                cy={yScale(commit.hourFrac)}
-                r={rScale(commit.totalLines)}
-                fill="steelblue"
-                class:selected={isCommitSelected(commit)}
+<Scrolly bind:progress={commitProgress}>
+    <!-- story here -->
+    {#each commits as commit, index}
+        <p>
+            On {commit.datetime.toLocaleString("en", {
+                dateStyle: "full",
+                timeStyle: "short",
+            })}, I made
+            <a href={commit.url} target="_blank"
+                >{index > 0
+                    ? "another glorious commit"
+                    : "my first commit, and it was glorious"}</a
+            >. I edited {commit.totalLines} lines across {d3.rollups(
+                commit.lines,
+                (D) => D.length,
+                (d) => d.file,
+            ).length} files. Then I looked over all I had made, and I saw that it
+            was very good.
+        </p>
+    {/each}
+    <svelte:fragment slot="viz">
+        <!-- Visualizations here -->
+        <svg viewBox="0 0 {width} {height}" bind:this={svg}>
+            <g
+                transform="translate(0, {usableArea.bottom})"
+                bind:this={xAxis}
             />
-        {/each}
-    </g>
-</svg>
+
+            <g
+                class="gridlines"
+                transform="translate({usableArea.left}, 0)"
+                bind:this={yAxisGridlines}
+            />
+            <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
+
+            <g class="dots">
+                <!-- lab 9 1.2 -->
+                {#each filteredCommits as commit, index (commit.id)}
+                    <circle
+                        on:mouseenter={(evt) => dotInteraction(index, evt)}
+                        on:mouseleave={(evt) => dotInteraction(index, evt)}
+                        on:click={(evt) => dotInteraction(index, evt)}
+                        cx={xScale(commit.datetime)}
+                        cy={yScale(commit.hourFrac)}
+                        r={rScale(commit.totalLines)}
+                        fill="steelblue"
+                        class:selected={isCommitSelected(commit)}
+                    />
+                {/each}
+            </g>
+        </svg>
+        <Pie data={pieData} {colors} />
+    </svelte:fragment>
+</Scrolly>
+
+<Scrolly bind:progress={raceProgress} --scrolly-layout="viz-first">
+    <svelte:fragment slot="viz">
+        <FileLines lines={filteredLines} {colors} />
+    </svelte:fragment>
+
+    {#each commits as commit, index}
+        <p>
+            On {commit.datetime.toLocaleString("en", {
+                dateStyle: "full",
+                timeStyle: "short",
+            })}, I made
+            <a href={commit.url} target="_blank"
+                >{index > 0
+                    ? "another glorious commit"
+                    : "my first commit, and it was glorious"}</a
+            >. I edited {commit.totalLines} lines across {d3.rollups(
+                commit.lines,
+                (D) => D.length,
+                (d) => d.file,
+            ).length} files. Then I looked over all I had made, and I saw that it
+            was very good.
+        </p>
+    {/each}
+</Scrolly>
+
 <p>{hasSelection ? selectedCommits.length : "No"} commits selected</p>
 
 {#each languageBreakdown as [language, lines]}
@@ -217,8 +354,6 @@
         </dd>
     </div>
 {/each}
-
-<Pie dataProp={pieData} />
 
 <dl class="stats">
     <dt>Total <abbr title="Lines of code">LOC</abbr></dt>
@@ -285,8 +420,16 @@
             transform-origin: center;
             transform-box: fill-box;
         }
+        @starting-style {
+            transition:
+                all 200ms,
+                r calc(var(--r) * 100ms);
+        }
     }
     .selected {
         fill: var(--color-accent);
+    }
+    :global(body) {
+        max-width: min(120ch, 80vw);
     }
 </style>
